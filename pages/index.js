@@ -10,7 +10,7 @@ import ads3 from "../public/images/long-ads.jpg";
 import ads4 from "../public/images/ads.png";
 import game from "../public/images/game.webp";
 import aws from "../public/images/amazon.svg";
-import chrome from "../public/images/chrome.svg";
+import chrome from "../public/images/Chrome.svg";
 import fox from "../public/images/firefox-logo.svg";
 import opera from "../public/images/opera.svg";
 import tel from "../public/images/008-telegram.png";
@@ -42,7 +42,7 @@ function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
 }
 
-export default function AppFour() {
+export default function Home() {
   const [selected, setSelected] = useState(people[1]);
   const [selected1, setSelected1] = useState(people1[1]);
   const [open, setOpen] = useState(false);

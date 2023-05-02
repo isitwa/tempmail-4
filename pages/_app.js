@@ -1,13 +1,8 @@
-import Layout from "@/components/PostLayout";
-import { useRouter } from "next/router";
 import "@/styles/globals.css";
 
-export default function App({ Component, pageProps }) {
-  const Layout = Component.Layout || EmptyLayout;
-  return (
-    <Layout>
-      <Component {...pageProps} />
-    </Layout>
-  );
+function _app({ Component, pageProps }) {
+  return <Component {...pageProps} />;
 }
-const EmptyLayout = ({ children }) => <>{children}</>;
+
+export default _app;
+import React from "react";
