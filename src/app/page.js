@@ -1,41 +1,41 @@
+"use client"
+
 import React from "react";
+import axios from "axios";
 import Link from "next/link";
 import Image from "next/image";
-import logo from "../public/images/brand-logo.png";
-import apply from "../public/images/itunes_header.svg";
-import play from "../public/images/gplay_header.svg";
-import ads1 from "../public/images/ads1.jpg";
-import ads2 from "../public/images/ads2.jpg";
-import ads3 from "../public/images/long-ads.jpg";
-import ads4 from "../public/images/ads.png";
-import game from "../public/images/game.webp";
-import aws from "../public/images/amazon.svg";
-import chrome from "../public/images/Chrome.svg";
-import fox from "../public/images/firefox-logo.svg";
-import opera from "../public/images/opera.svg";
-import tel from "../public/images/008-telegram.png";
-import slack from "../public/images/slack.svg";
+import logo from "../../public/images/brand-logo.png";
+import apply from "../../public/images/itunes_header.svg";
+import play from "../../public/images/gplay_header.svg";
+import ads1 from "../../public/images/ads1.jpg";
+import ads2 from "../../public/images/ads2.jpg";
+import ads3 from "../../public/images/long-ads.jpg";
+import ads4 from "../../public/images/ads.png";
+import game from "../../public/images/game.webp";
+import aws from "../../public/images/amazon.svg";
+import chrome from "../../public/images/Chrome.svg";
+import fox from "../../public/images/firefox-logo.svg";
+import opera from "../../public/images/opera.svg";
+import tel from "../../public/images/008-telegram.png";
+import slack from "../../public/images/slack.svg";
 import { Dialog, Transition } from "@headlessui/react";
 import { CheckIcon } from "@heroicons/react/24/outline";
-import { Fragment, useState } from "react";
+import { Fragment, useState,useEffect,useCallback } from "react";
 import { Listbox } from "@headlessui/react";
 import { ChevronUpDownIcon } from "@heroicons/react/20/solid";
+import { loadDomains, createEmailAccount, deleteEmailAccount, generateStrongPassword } from "../lib/email-service";
+import { generateHumanLikeEmail } from "../lib/name-generator";
+import { toast } from "sonner";
 
-import Mail_List_Four from "@/components/App_Four_Components/Mail_List_Four";
-import Open_Mail_Four from "@/components/App_Four_Components/Open_Mail_Four";
-import Change_Mail_Temp from "@/components/App_Four_Components/Change_Mail_Temp";
-import Premium_Popup from "@/components/App_Four_Components/Premium_Popup";
+import Mail_List_Four from "../../components/App_Four_Components/Mail_List_Four";
+import Open_Mail_Four from "../../components/App_Four_Components/Open_Mail_Four";
+import Change_Mail_Temp from "../../components/App_Four_Components/Change_Mail_Temp";
+import Premium_Popup from "../../components/App_Four_Components/Premium_Popup";
 
 const people = [
   { id: 1, name: "Eng" },
   { id: 2, name: "Spanish" },
   { id: 3, name: "Japanese" },
-];
-
-const people1 = [
-  { id: 1, name: "Tony@gmail.com" },
-  { id: 2, name: "Sass@gmail.com" },
-  { id: 3, name: "Sunny@gmail.com" },
 ];
 
 function classNames(...classes) {
@@ -44,13 +44,100 @@ function classNames(...classes) {
 
 export default function Home() {
   const [selected, setSelected] = useState(people[1]);
-  const [selected1, setSelected1] = useState(people1[1]);
+  const [selected1, setSelected1] = useState();
   const [open, setOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [domain, setDomain] = useState();
+  const [hostName, setHostName] = useState("");
+  const [openmail, setOpenmail] = useState(false);
+  const [refresh,setrefresh]=useState(0);
+  const [currmail, setcurrmail] = useState([]);
+  const [change,setchange]=useState(false)
+
+  useEffect(() => {
+    (async () => {
+      const host = window.location.hostname;
+      setHostName(host);
+      localStorage.setItem('hostname', host);
+      const dom = await loadDomains();
+      if (host) {
+        localStorage.setItem(`${host}_domains`, JSON.stringify(dom));
+      }
+      setDomain(dom);
+
+      let account = null;
+      try {
+        account = JSON.parse(localStorage.getItem(host + '_send_account'));
+      } catch (e) {
+        account = null;
+      }
+      if (!account && dom && dom.length > 0) {
+        const newUsername = generateHumanLikeEmail() + '@' + dom[0].name;
+        const newPassword = generateStrongPassword();
+        try {
+          const newAccount = await createEmailAccount(newUsername, newPassword);
+          if (newAccount) {
+            localStorage.setItem(host + '_send_account', JSON.stringify(newAccount));
+            setSelected1(newAccount);
+            refreshmail();
+          }
+        } catch (error) {
+          console.error('Error creating temp mail account:', error);
+        }
+      } else if (account) {
+        setSelected1(account);
+      }
+    })();
+  }, []);
+
+  const copyemail = useCallback(() => {
+    navigator.clipboard.writeText(selected1.email);
+    toast.success("Email copied to clipboard!");
+  })
+
+  const refreshmail = () => {
+    setrefresh((x) => x + 1);
+    toast.success("Emails refreshed!");
+  }
+  
+  const openemail = useCallback(() => {
+    const mailx = JSON.parse(localStorage.getItem(`${hostName}_currentmail`));
+    setcurrmail(mailx);
+    setOpenmail(true)
+    if (!currmail) {
+      openemail()
+    }
+  })
+
+  const refreshaccount = useCallback(async () => {
+    const newUsername = generateHumanLikeEmail() + "@" + domain[0].name;
+    const newPassword = generateStrongPassword();
+    const res = await createEmailAccount(newUsername, newPassword);
+    if (res) {
+      localStorage.setItem(hostName + '_send_account', JSON.stringify(res));
+      setSelected1(res);
+      refreshmail();
+      window.location.reload();
+      toast.success("New email account created!");
+    } else {
+      toast.error("Failed to create new email account");
+    }
+  }, [domain, hostName]);
+
+  const deleteAccount = async (e) => {
+    const accountId = selected1.id;
+    const res = await deleteEmailAccount(accountId);
+    if (res) {
+      refreshaccount();
+      toast.success("Account deleted successfully!");
+    } else {
+      toast.error("Failed to delete account");
+    }
+  }
+
   return (
     <>
       {modalOpen && <Premium_Popup setOpenModal={setModalOpen} />}
-      {/*  */}
       <header className="flex justify-center py-[30px] bg-zinc-900 gap-5">
         <div className="w-full lg:w-[1536px] px-[15px]">
           <div className="flex items-center justify-between ">
@@ -107,7 +194,6 @@ export default function Home() {
             <div className="flex justify-center col-span-12 md:col-span-3 ">
               <div className=" w-[300] shrink-0 mx-auto ">
                 <Image src={ads1} alt="image" className="w-full" />
-                {/* <Image src={ads1} alt="image" className="w-full" /> */}
               </div>
             </div>
             <div className=" col-span-12 md:col-span-6">
@@ -142,13 +228,17 @@ export default function Home() {
                       </svg>
                     </button>
 
-                    <Listbox value={selected1} onChange={setSelected1}>
+                    <Listbox value={selected1} onChange={(value)=>{
+                      setSelected1(value);
+                      localStorage.setItem(hostName + '_send_account', JSON.stringify(value))
+                    }}>
                       {({ open1 }) => (
                         <>
                           <div className="relative ">
                             <Listbox.Button className="relative w-full cursor-default rounded-full  text-white text-[16px] p-[15px] bg-gray-700 text-left">
                               <span className="block truncate text-[14px] md:text-[16px]">
-                                {selected1.name}
+                              {selected1 ? selected1.email : "Select email"}
+
                               </span>
                               <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                                 <ChevronUpDownIcon
@@ -166,9 +256,9 @@ export default function Home() {
                               leaveTo="opacity-0"
                             >
                               <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                                {people1.map((person1) => (
+                                {selected1 && (
                                   <Listbox.Option
-                                    key={person1.id}
+                                    key={selected1.id}
                                     className={({ active }) =>
                                       classNames(
                                         active
@@ -177,22 +267,22 @@ export default function Home() {
                                         "relative cursor-default select-none py-2 pl-3 pr-9"
                                       )
                                     }
-                                    value={person1}
+                                    value={selected1}
                                   >
-                                    {({ selected1, active }) => (
+                                    {({ selected1: isSelected, active }) => (
                                       <>
                                         <span
                                           className={classNames(
-                                            selected1
+                                            isSelected
                                               ? "font-semibold "
                                               : "font-normal  text-[14px] md:text-[16px]",
                                             "block truncate "
                                           )}
                                         >
-                                          {person1.name}
+                                          {selected1.email}
                                         </span>
 
-                                        {selected1 ? (
+                                        {isSelected ? (
                                           <span
                                             className={classNames(
                                               active
@@ -210,7 +300,7 @@ export default function Home() {
                                       </>
                                     )}
                                   </Listbox.Option>
-                                ))}
+                                )}
                               </Listbox.Options>
                             </Transition>
                           </div>
@@ -221,6 +311,7 @@ export default function Home() {
 
                   <button
                     type=""
+                    onClick={copyemail}
                     className="bg-green-500 rounded-full text-white w-[50px] h-[50px] text-center relative group"
                   >
                     <svg
@@ -259,7 +350,6 @@ export default function Home() {
             <div className="flex justify-center col-span-12 md:col-span-3">
               <div className="w-[300] shrink-0 mx-auto ">
                 <Image src={ads1} alt="image" className="w-full" />
-                {/* <Image src={ads2} alt="image" className="w-full" /> */}
               </div>
             </div>
           </div>
@@ -271,6 +361,7 @@ export default function Home() {
             <div>
               <button
                 type=""
+                onClick={copyemail}
                 className="bg-gray-100 hover:bg-thor-200 w-full text-center py-[17px] px-[40px] flex justify-center rounded-full shadow"
               >
                 <div className="flex gap-2 items-center">
@@ -298,6 +389,7 @@ export default function Home() {
             <div>
               <button
                 type=""
+                onClick={refreshmail}
                 className="bg-gray-100 hover:bg-thor-200 w-full text-center py-[17px] px-[40px] flex justify-center rounded-full shadow"
               >
                 <div className="flex gap-2 items-center">
@@ -327,7 +419,11 @@ export default function Home() {
                 type=""
                 className="bg-gray-100 hover:bg-thor-200 w-full text-center py-[17px] px-[40px] flex justify-center rounded-full shadow"
               >
-                <div className="flex gap-2 items-center">
+                <div className="flex gap-2 items-center" onClick={()=>{
+                  setchange(true)
+                }}>
+                
+
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 24 24"
@@ -346,6 +442,7 @@ export default function Home() {
             <div>
               <button
                 type=""
+                onClick={deleteAccount}
                 className="bg-gray-100 hover:bg-thor-200 w-full text-center py-[17px] px-[40px] flex justify-center rounded-full shadow"
               >
                 <div className="flex gap-2 items-center">
@@ -377,112 +474,27 @@ export default function Home() {
             <div className="grid grid-cols-12 gap-10">
               <div className="col-span-2 hidden md:block">
                 <div className="block h-[600px] w-full">
-                  <Image src={ads1} alt="image" className="w-full" />
-                  {/* <Image src={ads4} alt="images" className="w-full h-full" /> */}
                 </div>
               </div>
               <div className="col-span-12 md:col-span-8">
                 <div className="flex flex-col gap-4 w-full">
                   <div className="block">
-                    <Image src={ads1} alt="image" className="w-full" />
-                    {/* <Image src={ads3} alt="images" className="w-full" /> */}
                   </div>
                   <div className="flex flex-col row-span-3 overflow-hidden rounded-md">
-                    {/* <div className="flex p-4 bg-gray-900 dark:bg-zinc-800 text-white justify-between">
-                      <h3 className="text-white uppercase text-[16px]">
-                        Sender
-                      </h3>
-                      <h3 className="text-white uppercase text-[16px]">
-                        Subject
-                      </h3>
-                      <h3 className="text-white uppercase text-[16px]">View</h3>
-                    </div> */}
-                    <div className="grid grid-cols-12 gap-[15px] bg-zinc-900 justify-between  p-4">
-                      <h4 className="text-white  uppercase text-[13px] md:text-[16px] col-span-4 md:col-span-3">
-                        Sender
-                      </h4>
-                      <h4 className="text-white  uppercase text-[13px] md:text-[16px] col-span-6 md:col-span-7">
-                        Subject
-                      </h4>
-                      <h4 className="text-white  uppercase text-[13px] md:text-[16px] col-span-2 text-right">
-                        Open
-                      </h4>
-                    </div>
-                    <Mail_List_Four />
+                   
+                   {change?<Change_Mail_Temp  domains={domain} refreshmail={refreshmail} setchange={setchange} />:
+                   <>
+                    {openmail ? <Open_Mail_Four currmail={currmail} openmail={setOpenmail}  setcurrmail={setcurrmail} select={selected1} refresh={refreshmail}/> : selected1 ? <Mail_List_Four select={selected1} openmail={setOpenmail} currmail={openemail} key={refresh} /> : ""}
 
-                    <Open_Mail_Four />
-                    <Change_Mail_Temp />
-                    <div className="flex flex-col bg-white shadow p-5 h-[500px]">
-                      <div className="m-auto">
-                        <div className="flex flex-col gap-3">
-                          <div className="mx-auto">
-                            <svg
-                              width="92"
-                              height="94"
-                              viewBox="0 0 92 87"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                d="M26 54.37V38.9C26.003 37.125 26.9469 35.4846 28.48 34.59L43.48 25.84C45.027 24.9468 46.933 24.9468 48.48 25.84L63.48 34.59C65.0285 35.4745 65.9887 37.1167 66 38.9V54.37C66 57.1314 63.7614 59.37 61 59.37H31C28.2386 59.37 26 57.1314 26 54.37Z"
-                                fill="#8C92A5"
-                              ></path>
-                              <path
-                                d="M46 47.7L26.68 36.39C26.2325 37.1579 25.9978 38.0312 26 38.92V54.37C26 57.1314 28.2386 59.37 31 59.37H61C63.7614 59.37 66 57.1314 66 54.37V38.9C66.0022 38.0112 65.7675 37.1379 65.32 36.37L46 47.7Z"
-                                fill="#CDCDD8"
-                              ></path>
-                              <path
-                                d="M27.8999 58.27C28.7796 58.9758 29.8721 59.3634 30.9999 59.37H60.9999C63.7613 59.37 65.9999 57.1314 65.9999 54.37V38.9C65.9992 38.0287 65.768 37.1731 65.3299 36.42L27.8999 58.27Z"
-                                fill="#E5E5F0"
-                              ></path>
-                              <path
-                                class="emptyInboxRotation"
-                                d="M77.8202 29.21L89.5402 25.21C89.9645 25.0678 90.4327 25.1942 90.7277 25.5307C91.0227 25.8673 91.0868 26.348 90.8902 26.75L87.0002 34.62C86.8709 34.8874 86.6407 35.0924 86.3602 35.19C86.0798 35.2806 85.7751 35.2591 85.5102 35.13L77.6502 31.26C77.2436 31.0643 76.9978 30.6401 77.0302 30.19C77.0677 29.7323 77.3808 29.3438 77.8202 29.21Z"
-                                fill="#E5E5F0"
-                              ></path>
-                              <path
-                                class="emptyInboxRotation"
-                                d="M5.12012 40.75C6.36707 20.9791 21.5719 4.92744 41.2463 2.61179C60.9207 0.296147 79.4368 12.3789 85.2401 31.32"
-                                stroke="#E5E5F0"
-                                stroke-width="3"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                              ></path>
-                              <path
-                                class="emptyInboxRotation"
-                                d="M14.18 57.79L2.46001 61.79C2.03313 61.9358 1.56046 61.8088 1.2642 61.4686C0.967927 61.1284 0.906981 60.6428 1.11001 60.24L5.00001 52.38C5.12933 52.1127 5.35954 51.9076 5.64001 51.81C5.92044 51.7194 6.22508 51.7409 6.49001 51.87L14.35 55.74C14.7224 55.9522 14.9394 56.36 14.9073 56.7874C14.8753 57.2149 14.5999 57.5857 14.2 57.74L14.18 57.79Z"
-                                fill="#E5E5F0"
-                              ></path>
-                              <path
-                                class="emptyInboxRotation"
-                                d="M86.9998 45.8C85.9593 65.5282 70.9982 81.709 51.4118 84.2894C31.8254 86.8697 13.1841 75.1156 7.06982 56.33"
-                                stroke="#E5E5F0"
-                                stroke-width="3"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                              ></path>
-                            </svg>
-                          </div>
-                          <h3 className="text-gray-600 text-[18px] text-center">
-                            Your inbox is empty
-                          </h3>
-                          <p className="text-gray-500 text-[14px] text-center">
-                            Waiting for incoming emails
-                          </p>
-                        </div>
-                      </div>
-                    </div>
+                   </>}
+                    
                   </div>
                   <div className="block">
-                    {/* <Image src={ads3} alt="images" className="w-full" /> */}
-                    <Image src={ads1} alt="image" className="w-full" />
                   </div>
                 </div>
               </div>
               <div className="col-span-2 hidden md:block">
                 <div className="block h-[600px] w-full">
-                  <Image src={ads1} alt="image" className="w-full" />
-                  {/* <Image src={ads4} alt="images" className="w-full h-full" /> */}
                 </div>
               </div>
             </div>
@@ -666,7 +678,7 @@ export default function Home() {
             </p>
             <p className="text-gray-600 dark:text-white  text-[14px]">
               We all enjoy having an email address, but getting tons of spam
-              emails each day doesn’t feel comfortable. Furthermore, it’s
+              emails each day doesn't feel comfortable. Furthermore, it's
               entirely common for stores to have their databases hacked, leaving
               your business email address at risk and more likely to end up on
               spam lists. Still, nothing done online is 100% private. Thus you
@@ -684,14 +696,14 @@ export default function Home() {
             </p>
             <p className="text-gray-600  dark:text-white text-[14px]">
               Disposable email address (DEA) technically means an approach where
-              a user’s with a unique email address gets a temporary email
+              a user's with a unique email address gets a temporary email
               address for your current contact. The DEA allow the creation of an
               email address that passes validity need to sign-up for services
               and website without having to show your true identity.
             </p>
             <p className="text-gray-600 dark:text-white  text-[14px]">
               Disposable emails address if compromised or used in connection
-              with email abuse online, the owner can’t be tied to the abuse and
+              with email abuse online, the owner can't be tied to the abuse and
               quickly cancel its application without affecting other contacts.
               With temporary mail, you can you receive your emails from the fake
               emails in your genuine emails address for a specified time set.
@@ -723,7 +735,7 @@ export default function Home() {
             </p>
             <p className="text-gray-600 dark:text-white  text-[14px]">
               If you are looking for legitimate reasons to use a disposable
-              email address here’s a few:
+              email address here's a few:
             </p>
             <h3 className="text-gray-800 dark:text-white font-semibold text-[18px]">
               How to Choose a Disposable Email?
@@ -751,7 +763,7 @@ export default function Home() {
               </li>
               <li className="text-gray-600 dark:text-white text-[14px]">
                 {" "}
-                Offers temporarily email stored (temporal email inbox at user’s
+                Offers temporarily email stored (temporal email inbox at user's
                 disposal).
               </li>
               <li className="text-gray-600 dark:text-white text-[14px]">
@@ -773,14 +785,14 @@ export default function Home() {
             </h3>
             <p className="text-gray-600 dark:text-white  text-[14px]">
               Users choose to get disposable email address by creating a new
-              email account with their current email provider’s such as Gmail,
+              email account with their current email provider's such as Gmail,
               but the account comes with many challenges such as you will have
               to manage emails new account. Users, who opt for free mail
               services by creating a new account, put up with a new email
               address.
             </p>
             <p className="text-gray-600 dark:text-white text-[14px]">
-              It’d work if you had one email address and a few disposable emails
+              It'd work if you had one email address and a few disposable emails
               from temp-mail.org and managed one account inbox.
             </p>
             <p className="text-gray-600 dark:text-white  text-[14px]">

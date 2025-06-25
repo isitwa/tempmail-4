@@ -1,5 +1,6 @@
 import React from "react";
-import { Fragment, useState } from "react";
+import axios from "axios";
+import { Fragment, useState,useEffect } from "react";
 import { Listbox, Transition } from "@headlessui/react";
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/20/solid";
 
@@ -13,15 +14,78 @@ function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
 }
 
-export default function Change_Mail_Temp() {
-  const [selected, setSelected] = useState(people[1]);
+
+export default function Change_Mail_Temp({domains,refreshmail,setchange}) {
+  const [selected, setSelected] = useState();
+  const [email, setemail] = useState("");
+  const [password, setpassword] = useState("");
+  const [hostName,setHostName]=useState("");
+
+
+
+
+  
+  useEffect(() => {
+    (async () => {
+      const host = window.location.hostname;
+      setHostName(host);
+      localStorage.setItem('hostname', host);
+      setSelected(domains[0]);
+    })()
+  },[])
+
+  const handlesubmit = async (e) => {
+  
+
+    // setShow(!show)
+    // setemail("")
+    // setpassword("")
+    // setSelectdomain([])
+    e.preventDefault();
+
+    const usernameRegex = /^[a-zA-Z0-9_]+$/
+    if (!usernameRegex.test(email)) {
+      setError("Username must be alphanumeric and underscore")
+      return
+    }
+
+
+
+    axios.post('/api/account/create', {
+      email: `${email}@${selected.name}`,
+      password: password
+    }).then((res) => {
+      console.log(res)
+      if (res.data.status) {
+        localStorage.setItem(hostName + '_send_account', JSON.stringify(res.data.account))
+        // setSelected1(res.data.account)
+        setchange()
+        refreshmail()
+        window.location.reload()
+      } else {
+        setError(res.data.message)
+      }
+    }).catch((err) => {
+      console.log(err)
+    })
+
+  }
+
+
+
   return (
     <>
       <div className="flex flex-col bg-white">
-        <div className="flex items-center p-4 bg-zinc-900 gap-[15px]">
+        <div className="flex justify-between items-center p-4 bg-zinc-900 gap-[15px]">
           <h4 className="text-white text-[14px] uppercase">
             Change e-mail address - Temp Mail
           </h4>
+          <h4 className="text-white text-[14px] uppercase" onClick={()=>{
+            setchange(false)
+          }}>
+            Cancel
+          </h4>
+          
         </div>
 
         <div className="flex flex-col gap-6 py-6 px-10">
@@ -43,11 +107,15 @@ export default function Change_Mail_Temp() {
                   <input
                     type="text"
                     placeholder="User name"
+                    value={email}
+                    onChange={(e) => setemail(e.target.value)}
                     className="w-full bg-gray-100 p-4 rounded-full"
                   />
                   <input
                     type="text"
                     placeholder="Password"
+                    value={password}
+                    onChange={(e) => setpassword(e.target.value)}
                     className="w-full bg-gray-100 p-4 rounded-full"
                   />
                   <Listbox value={selected} onChange={setSelected}>
@@ -56,7 +124,7 @@ export default function Change_Mail_Temp() {
                         <div className="relative mt-1">
                           <Listbox.Button className="relative w-full cursor-default bg-gray-100 p-4 rounded-full p-4 text-left shadow-sm  sm:text-sm">
                             <span className="block truncate">
-                              {selected.name}
+                              {selected?selected.name:""}
                             </span>
                             <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                               <ChevronUpDownIcon
@@ -74,7 +142,7 @@ export default function Change_Mail_Temp() {
                             leaveTo="opacity-0"
                           >
                             <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                              {people.map((person) => (
+                              {domains.map((person) => (
                                 <Listbox.Option
                                   key={person.id}
                                   className={({ active }) =>
@@ -129,6 +197,7 @@ export default function Change_Mail_Temp() {
                   <button
                     type="submit"
                     className="text-[14px] text-white bg-gray-600 rounded-full p-4"
+                    onClick={handlesubmit}
                   >
                     Get Domain
                   </button>

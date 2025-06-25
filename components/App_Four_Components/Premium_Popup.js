@@ -12,14 +12,14 @@ export default function Premium_Popup({ setOpenModal }) {
       {/*  */}
       <div className="fixed top-0 bottom-0 left-0 right-0   z-[100]">
         <div className=" absolute top-0 bottom-0 left-0 right-0 bg-gray-700 opacity-90 z-[101]"></div>
-        <div className=" absolute top-[50%] left-[50%] -translate-x-[50%] -translate-y-[50%] px-2 pt-3 pb-5 z-[102] w-[90%] md:w-[480px] bg-gray-900 rounded">
+        <div className=" absolute top-[50%] left-[50%] -translate-x-[50%] -translate-y-[50%] px-2 h-[99vh]  z-[102] w-[90%] md:w-[480px] bg-gray-900 rounded">
           <div className="flex items-center justify-between px-4 py-2">
             <div className="flex gap-3">
               <button
                 onClick={() => {
                   setpopOpen(true);
                 }}
-                className="text-[13px] bg-yellow-500 text-gray-800 rounded-full py-[6px] px-[16px]"
+                className="text-[13px] bg-yellow-500 text-gray-800 rounded-full py-[3px] px-[16px]"
               >
                 Login
               </button>
@@ -29,7 +29,7 @@ export default function Premium_Popup({ setOpenModal }) {
                 onClick={() => {
                   setOpenModal(false);
                 }}
-                className="text-white text-[16px]"
+                className="text-white text-[14px]"
               >
                 X
               </button>
@@ -42,21 +42,21 @@ export default function Premium_Popup({ setOpenModal }) {
             </div>
           </div>
 
-          <div className="flex justify-center my-5">
+          <div className="flex justify-center my-3">
             <div className="flex gap-2">
-              <h4 className="text-white text-[24px]">$</h4>
-              <h5 className="text-[50px] text=white font-semibold">10</h5>
-              <h6 className="text-white text-[24px] mt-10">/month</h6>
+              <h4 className="text-white text-[22px]">$</h4>
+              <h5 className="text-[48px] text=white font-semibold">10</h5>
+              <h6 className="text-white text-[22px] mt-10">/month</h6>
             </div>
           </div>
           <div className="flex justify-center gap-[20px]">
             <div>
-              <button className="text-white text-[16px] font-medium rounded-md py-[6px] w-[130px] bg-green-500">
+              <button className="text-white text-[15px] font-medium rounded-md py-[5px] w-[130px] bg-green-500">
                 1 month
               </button>
             </div>
             <div>
-              <button className="text-white text-[16px] font-medium rounded-md py-[6px] w-[130px] bg-green-500">
+              <button className="text-white text-[15px] font-medium rounded-md py-[5px] w-[130px] bg-green-500">
                 1 year
               </button>
               <h4 className="text-yellow-500 mt-3 text-[14px]">Save 50%</h4>
@@ -210,7 +210,7 @@ export default function Premium_Popup({ setOpenModal }) {
               </div>
             </div>
           </div>
-          <div className="flex justify-center  my-5">
+          <div className="flex justify-center  my-4">
             <form action="" className=" w-[90%] md:w-[80%]">
               <div className="flex flex-col gap-3">
                 <div>
@@ -222,12 +222,12 @@ export default function Premium_Popup({ setOpenModal }) {
                   type="email"
                   name=""
                   id=""
-                  className="bg-white p-3 text-[16px] w-full rounded-md text-center"
+                  className="bg-white p-2 text-[15px] w-full rounded-md text-center"
                   placeholder="your@real.email.com"
                 />
                 <button
                   type="submit"
-                  className="text-white p-3 text-[16px] uppercase font-medium bg-green-500 rounded-md"
+                  className="text-white p-2 text-[15px] uppercase font-medium bg-green-500 rounded-md"
                 >
                   Subscribe Now
                 </button>
@@ -237,12 +237,12 @@ export default function Premium_Popup({ setOpenModal }) {
           <div className="flex justify-center">
             <div className="flex flex-col gap-3">
               <div className="text-center">
-                <Link href="#" className="text-center text-[16px]">
+                <Link href="#" className="text-center text-[15px]">
                   Pay with Crypto - 1 year
                 </Link>
               </div>
               <div className="flex gap-2">
-                <Link href="#" className="text-center text-[16px]">
+                <Link href="#" className="text-center text-[15px]">
                   Terms of Service{" "}
                 </Link>
                 <span>|</span>
